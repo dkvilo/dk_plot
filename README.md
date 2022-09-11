@@ -12,7 +12,7 @@ Have Fun
 
 <img src="https://github.com/dkvilo/dk_plot/blob/master/samples/mandelbrot.bmp" />
 
-# Ploting
+# Plotting
 
 ```c
 #define DK_BMP_IMPLEMENTATION
