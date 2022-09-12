@@ -144,6 +144,8 @@ typedef struct dk_bmp_t
   u8 *data;
 } dk_bmp_t;
 
+// BMP FUNCTION DECLARATIONS
+
 i32 dk_bmp_read(dk_bmp_t *bmp, const char *filename);
 
 i32 dk_bmp_write(const dk_bmp_t *bmp, const char *filename);
@@ -160,7 +162,69 @@ void dk_bmp_flip(dk_bmp_t *bmp);
 
 void dk_bmp_mirror(dk_bmp_t *bmp);
 
+void dk_bmp_clear(dk_bmp_t *bmp, const dk_color_t color);
+
+void dk_bmp_create(dk_bmp_t *bmp, i32 width, i32 height, dk_color_t color);
+
 void dk_bmp_rotate(dk_bmp_t *bmp);
+
+void dk_bmp_resize(dk_bmp_t *bmp, i32 width, i32 height);
+
+void dk_bmp_crop(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height);
+
+void dk_bmp_grayscale(dk_bmp_t *bmp);
+
+void dk_bmp_draw_line(dk_bmp_t *bmp, i32 x0, i32 y0, i32 x1, i32 y1, dk_color_t color);
+
+void dk_bmp_draw_rect(dk_bmp_t *bmp, i32 x0, i32 y0, i32 x1, i32 y1, dk_color_t color);
+
+void dk_bmp_draw_rect_filled(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, dk_color_t color);
+
+void dk_bmp_draw_circle(dk_bmp_t *bmp, i32 x0, i32 y0, i32 radius, dk_color_t color);
+
+void dk_bmp_draw_cube(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 heigh, i32 depth, dk_color_t color);
+
+void dk_bmp_merge(dk_bmp_t *bmp, dk_bmp_t *bmp2, i32 x, i32 y);
+
+void dk_bmp_draw_pixel(dk_bmp_t *bmp, i32 x, i32 y, dk_color_t color);
+
+void dk_bmp_draw_arc(dk_bmp_t *bmp, i32 x, i32 y, i32 radius, i32 start_angle, i32 end_angle, dk_color_t color);
+
+void dk_bmp_draw_arc_filled(dk_bmp_t *bmp, i32 x, i32 y, i32 radius, i32 start_angle, i32 end_angle, dk_color_t color);
+
+void dk_bmp_draw_grid(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i32 cell_width, i32 cell_height, dk_color_t color);
+
+void dk_bmp_draw_ruler(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i32 cell_width, i32 cell_height, dk_color_t color);
+
+void dk_bm_draw_text(dk_bmp_t* bmp, i32 x, i32 y, byte *text, i32 size, i32 color);
+
+void dk_bmp_skew(dk_bmp_t *bmp, i32 skew);
+
+u32 dk_color_to_hex(dk_color_t color);
+
+// PLOT FUNCTION DECLARATIONS
+
+void dk_bmp_draw_bar_chart(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i32 *values, i32 count, i32 max_value, dk_color_t *colors);
+
+void dk_bmp_draw_pie_chart(dk_bmp_t *bmp, i32 x, i32 y, i32 radius, i32 *values, i32 count, i32 max_value, dk_color_t *colors);
+
+void dk_bmp_draw_dot_chart(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i32 *values, i32 count, i32 max_value, dk_color_t *colors);
+
+void dk_bmp_draw_line_chart(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i32 *values, i32 count, i32 max_value, dk_color_t *colors);
+
+// OTHER FUNCTION DECLARATIONS
+
+void dk_bmp_draw_mandelbrot(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i32 max_iter);
+
+void dk_bmp_draw_fern(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i32 max_iter);
+
+void dk_bmp_draw_hilbert(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i32 depth, i32 angle, dk_color_t color);
+
+void dk_bmp_draw_sierpinski(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i32 depth, dk_color_t color);
+
+void dk_bmp_draw_sierpinski_carpet(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i32 depth, dk_color_t color);
+
+void dk_bmp_draw_levy_c_curve(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i32 depth, i32 direction, dk_color_t color);
 
 #if defined(DK_BMP_IMPLEMENTATION)
 #include <stdio.h>
@@ -259,7 +323,7 @@ i32 dk_bmp_set_pixel(dk_bmp_t *bmp, i32 x, i32 y, const dk_color_t *color)
   return 0;
 }
 
-void dk_bmp_clear(const dk_bmp_t *bmp, dk_color_t color)
+void dk_bmp_clear(dk_bmp_t *bmp, dk_color_t color)
 {
   for (i32 y = 0; y < bmp->height; y++)
   {
@@ -700,7 +764,7 @@ void dk_bmp_draw_line_chart(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, 
   {
     i32 x1 = x + i * width / count;
     i32 y1 = y + height - values[i] * height / max_value;
-  
+
     dk_bmp_draw_line(bmp, x0, y0, x1, y1, colors[i]);
     for (i32 j = 0; j < 8; ++j)
     {
@@ -886,7 +950,7 @@ void dk_bm_draw_text(dk_bmp_t* bmp, i32 x, i32 y, byte *text, i32 size, i32 colo
               dk_bmp_draw_rect_filled(bmp, x + (i * 6 * size) + (j * size) + l, y - (k * size) + m, 1, 1, color);
             }
           }
-        } 
+        }
       }
     }
   }
