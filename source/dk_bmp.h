@@ -18,6 +18,7 @@ typedef u32 dk_color_t;
 #define DK_PINK 0x00FFC0CB
 #define DK_PURPLE 0x00800080
 #define DK_BROWN 0x00A52A2A
+#define DK_GRAY 0x77777777
 
 #define M_PI 3.14159265358979323846
 
@@ -158,6 +159,8 @@ i32 dk_bmp_set_pixel(dk_bmp_t *bmp, i32 x, i32 y, const dk_color_t *color);
 
 void dk_bmp_display(const dk_bmp_t *bmp);
 
+void dk_bmp_display_scaled(const dk_bmp_t *bmp, i32 scale_factor);
+
 void dk_bmp_flip(dk_bmp_t *bmp);
 
 void dk_bmp_mirror(dk_bmp_t *bmp);
@@ -211,20 +214,6 @@ void dk_bmp_draw_pie_chart(dk_bmp_t *bmp, i32 x, i32 y, i32 radius, i32 *values,
 void dk_bmp_draw_dot_chart(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i32 *values, i32 count, i32 max_value, dk_color_t *colors);
 
 void dk_bmp_draw_line_chart(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i32 *values, i32 count, i32 max_value, dk_color_t *colors);
-
-// OTHER FUNCTION DECLARATIONS
-
-void dk_bmp_draw_mandelbrot(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i32 max_iter);
-
-void dk_bmp_draw_fern(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i32 max_iter);
-
-void dk_bmp_draw_hilbert(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i32 depth, i32 angle, dk_color_t color);
-
-void dk_bmp_draw_sierpinski(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i32 depth, dk_color_t color);
-
-void dk_bmp_draw_sierpinski_carpet(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i32 depth, dk_color_t color);
-
-void dk_bmp_draw_levy_c_curve(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i32 depth, i32 direction, dk_color_t color);
 
 #if defined(DK_BMP_IMPLEMENTATION)
 #include <stdio.h>
@@ -359,6 +348,38 @@ void dk_bmp_display(const dk_bmp_t *bmp)
     printf("\n");
   }
 }
+
+void dk_bmp_display_scaled(const dk_bmp_t *bmp, i32 scale_factor)
+{
+  for (i32 y = 0; y < bmp->height; y += scale_factor)
+  {
+    for (i32 x = 0; x < bmp->width; x += scale_factor)
+    {
+      dk_color_t avg_color = {0, 0, 0};
+      i32 pixel_count = 0;
+
+      for (i32 dy = 0; dy < scale_factor && y + dy < bmp->height; ++dy)
+      {
+        for (i32 dx = 0; dx < scale_factor && x + dx < bmp->width; ++dx)
+        {
+          dk_color_t color;
+          dk_bmp_get_pixel(bmp, x + dx, y + dy, &color);
+          avg_color += color;
+          ++pixel_count;
+        }
+      }
+
+      avg_color /= pixel_count;
+      u8 r = (avg_color >> 16) & 0xff;
+      u8 g = (avg_color >> 8) & 0xff;
+      u8 b = avg_color & 0xff;
+
+      printf("\x1b[48;2;%d;%d;%dm  \x1b[0m", r, g, b);
+    }
+    printf("\n");
+  }
+}
+
 
 void dk_bmp_flip(dk_bmp_t *bmp)
 {
@@ -501,43 +522,6 @@ void dk_bmp_draw_circle(dk_bmp_t *bmp, i32 x, i32 y, i32 radius, dk_color_t colo
   }
 }
 
-void dk_bmp_draw_cube(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i32 depth, dk_color_t color)
-{
-  i32 x0 = x + width / 2;
-  i32 y0 = y + height / 2;
-  i32 z0 = depth / 2;
-
-  // front
-  dk_bmp_draw_line(bmp, x0 - width / 2, y0 - height / 2, x0 + width / 2, y0 - height / 2, color);
-  dk_bmp_draw_line(bmp, x0 + width / 2, y0 - height / 2, x0 + width / 2, y0 + height / 2, color);
-  dk_bmp_draw_line(bmp, x0 + width / 2, y0 + height / 2, x0 - width / 2, y0 + height / 2, color);
-  dk_bmp_draw_line(bmp, x0 - width / 2, y0 + height / 2, x0 - width / 2, y0 - height / 2, color);
-
-  // back
-  dk_bmp_draw_line(bmp, x0 - width / 2, y0 - height / 2, x0 - width / 2, y0 - height / 2 - depth, color);
-  dk_bmp_draw_line(bmp, x0 + width / 2, y0 - height / 2, x0 + width / 2, y0 - height / 2 - depth, color);
-  dk_bmp_draw_line(bmp, x0 + width / 2, y0 + height / 2, x0 + width / 2, y0 + height / 2 - depth, color);
-  dk_bmp_draw_line(bmp, x0 - width / 2, y0 + height / 2, x0 - width / 2, y0 + height / 2 - depth, color);
-
-  // sides
-  dk_bmp_draw_line(bmp, x0 - width / 2, y0 - height / 2, x0 - width / 2, y0 - height / 2 - depth, color);
-  dk_bmp_draw_line(bmp, x0 + width / 2, y0 - height / 2, x0 + width / 2, y0 - height / 2 - depth, color);
-  dk_bmp_draw_line(bmp, x0 + width / 2, y0 + height / 2, x0 + width / 2, y0 + height / 2 - depth, color);
-  dk_bmp_draw_line(bmp, x0 - width / 2, y0 + height / 2, x0 - width / 2, y0 + height / 2 - depth, color);
-
-  // top
-  dk_bmp_draw_line(bmp, x0 - width / 2, y0 - height / 2 - depth, x0 + width / 2, y0 - height / 2 - depth, color);
-  dk_bmp_draw_line(bmp, x0 + width / 2, y0 - height / 2 - depth, x0 + width / 2, y0 + height / 2 - depth, color);
-  dk_bmp_draw_line(bmp, x0 + width / 2, y0 + height / 2 - depth, x0 - width / 2, y0 + height / 2 - depth, color);
-  dk_bmp_draw_line(bmp, x0 - width / 2, y0 + height / 2 - depth, x0 - width / 2, y0 - height / 2 - depth, color);
-
-  // bottom
-  dk_bmp_draw_line(bmp, x0 - width / 2, y0 - height / 2, x0 + width / 2, y0 - height / 2, color);
-  dk_bmp_draw_line(bmp, x0 + width / 2, y0 - height / 2, x0 + width / 2, y0 + height / 2, color);
-  dk_bmp_draw_line(bmp, x0 + width / 2, y0 + height / 2, x0 - width / 2, y0 + height / 2, color);
-  dk_bmp_draw_line(bmp, x0 - width / 2, y0 + height / 2, x0 - width / 2, y0 - height / 2, color);
-}
-
 // merge two bitmaps
 // FIXME: this is not working correctly
 void dk_bmp_merge(dk_bmp_t *bmp, dk_bmp_t *bmp2, i32 x, i32 y)
@@ -633,8 +617,10 @@ void dk_bmp_draw_line(dk_bmp_t *bmp, i32 x0, i32 y0, i32 x1, i32 y1, dk_color_t 
   while (1)
   {
     dk_bmp_set_pixel(bmp, x0, y0, &color);
+
     if (x0 == x1 && y0 == y1)
       break;
+
     e2 = 2 * err;
     if (e2 >= dy)
     {
@@ -660,23 +646,19 @@ void dk_bmp_draw_arc(dk_bmp_t *bmp, i32 x, i32 y, i32 radius, i32 start_angle, i
   }
 }
 
-// draw arch filled with color
 void dk_bmp_draw_arc_filled(dk_bmp_t *bmp, i32 x, i32 y, i32 radius, i32 start_angle, i32 end_angle, dk_color_t color)
 {
-  for (i32 angle = start_angle; angle <= end_angle; ++angle)
+  for (i32 angle = start_angle; angle < end_angle; ++angle)
   {
     double rad = angle * M_PI / 180;
     i32 x0 = x + radius * cos(rad);
     i32 y0 = y + radius * sin(rad);
 
-    for (i32 i = 0; i < 10; ++i)
-    {
-      dk_bmp_draw_line(bmp, x + i, y + i, x0 + i, y0 +i, color);
-    }
+    dk_bmp_draw_line(bmp, x, y, x0, y0, color);
   }
 }
 
-// draw PIE CHART on the bitmap
+
 void dk_bmp_draw_pie_chart(dk_bmp_t *bmp, i32 x, i32 y, i32 radius, i32 *values, i32 count, i32 max_value, dk_color_t *colors)
 {
   i32 total = 0;
@@ -706,7 +688,6 @@ void dk_bmp_draw_dot_chart(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i
   }
 }
 
-// draw filled rect on the bitmap
 void dk_bmp_draw_rect_filled(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, dk_color_t color)
 {
   for (i32 y0 = y; y0 < y + height; ++y0)
@@ -718,7 +699,6 @@ void dk_bmp_draw_rect_filled(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height,
   }
 }
 
-// draw grid on the bitmap
 void dk_bmp_draw_grid(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i32 cell_width, i32 cell_height, dk_color_t color)
 {
   for (i32 y0 = y; y0 < y + height; y0 += cell_height)
@@ -730,7 +710,6 @@ void dk_bmp_draw_grid(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i32 ce
   }
 }
 
-// draw ruler on the bitmap
 void dk_bmp_draw_ruler(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i32 cell_width, i32 cell_height, dk_color_t color)
 {
   for (i32 y0 = y; y0 < y + height; y0 += cell_height)
@@ -753,7 +732,6 @@ void dk_bmp_draw_bar_chart(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i
   }
 }
 
-
 // draw line chart on the bitmap
 // FIXME: ---
 void dk_bmp_draw_line_chart(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i32 *values, i32 count, i32 max_value, dk_color_t *colors)
@@ -773,166 +751,6 @@ void dk_bmp_draw_line_chart(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, 
 
     x0 = x1;
     y0 = y1;
-  }
-}
-
-
-void dk_bmp_draw_fern(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i32 max_iter)
-{
-  double x0 = 0, y0 = 0;
-  for (i32 i = 0; i < max_iter; ++i)
-  {
-    double x1, y1;
-    double r = (double)rand() / RAND_MAX;
-    if (r < 0.01)
-    {
-      x1 = 0;
-      y1 = 0.16 * y0;
-    }
-    else if (r < 0.86)
-    {
-      x1 = 0.85 * x0 + 0.04 * y0;
-      y1 = -0.04 * x0 + 0.85 * y0 + 1.6;
-    }
-    else if (r < 0.93)
-    {
-      x1 = 0.2 * x0 - 0.26 * y0;
-      y1 = 0.23 * x0 + 0.22 * y0 + 1.6;
-    }
-    else
-    {
-      x1 = -0.15 * x0 + 0.28 * y0;
-      y1 = 0.26 * x0 + 0.24 * y0 + 0.44;
-    }
-
-    x0 = x1;
-    y0 = y1;
-
-    i32 x2 = x + x0 * width / 10;
-    i32 y2 = y + y0 * height / 12;
-    dk_color_t color = 0;
-    dk_bmp_set_pixel(bmp, x2, y2, &color);
-  }
-}
-
-void dk_bmp_draw_hilbert(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i32 depth, i32 angle, dk_color_t color)
-{
-  if (depth == 0)
-    return;
-
-  i32 width0 = width / 2;
-  i32 height0 = height / 2;
-
-  switch (angle)
-  {
-    case 0:
-      dk_bmp_draw_hilbert(bmp, x, y, width0, height0, depth - 1, 1, color);
-      dk_bmp_draw_line(bmp, x, y, x + width0, y, color);
-      dk_bmp_draw_hilbert(bmp, x, y, width0, height0, depth - 1, 0, color);
-      dk_bmp_draw_line(bmp, x + width0, y, x + width0, y + height0, color);
-      dk_bmp_draw_hilbert(bmp, x + width0, y + height0, width0, height0, depth - 1, 0, color);
-      dk_bmp_draw_line(bmp, x + width0, y + height0, x, y + height0, color);
-      dk_bmp_draw_hilbert(bmp, x, y + height0, width0, height0, depth - 1, 3, color);
-      break;
-    case 1:
-      dk_bmp_draw_hilbert(bmp, x + width0, y, width0, height0, depth - 1, 0, color);
-      dk_bmp_draw_line(bmp, x + width0, y, x + width0, y + height0, color);
-      dk_bmp_draw_hilbert(bmp, x, y, width0, height0, depth - 1, 1, color);
-      dk_bmp_draw_line(bmp, x, y + height0, x + width0, y + height0, color);
-      dk_bmp_draw_hilbert(bmp, x, y, width0, height0, depth - 1, 1, color);
-      dk_bmp_draw_line(bmp, x, y, x, y + height0, color);
-      dk_bmp_draw_hilbert(bmp, x, y + height0, width0, height0 , depth - 1, 2, color);
-      break;
-    case 2:
-      dk_bmp_draw_hilbert(bmp, x, y + height0, width0, height0, depth - 1, 3, color);
-      dk_bmp_draw_line(bmp, x, y + height0, x, y, color);
-      dk_bmp_draw_hilbert(bmp, x + width0, y + height0, width0, height0, depth - 1, 2, color);
-      dk_bmp_draw_line(bmp, x + width0, y + height0, x + width0, y, color);
-      dk_bmp_draw_hilbert(bmp, x + width0, y + height0, width0, height0, depth - 1, 2, color);
-      dk_bmp_draw_line(bmp, x + width0, y, x, y, color);
-      dk_bmp_draw_hilbert(bmp, x, y, width0, height0, depth - 1, 1, color);
-      break;
-    case 3:
-      dk_bmp_draw_hilbert(bmp, x, y, width0, height0, depth - 1, 2, color);
-      dk_bmp_draw_line(bmp, x, y, x + width0, y, color);
-      dk_bmp_draw_hilbert(bmp, x + width0, y + height0, width0, height0, depth - 1, 3, color);
-      dk_bmp_draw_line(bmp, x + width0, y, x + width0, y + height0, color);
-      dk_bmp_draw_hilbert(bmp, x + width0, y + height0, width0, height0, depth - 1, 3, color);
-      dk_bmp_draw_line(bmp, x + width0, y + height0, x, y + height0, color);
-      dk_bmp_draw_hilbert(bmp, x, y + height0, width0, height0, depth - 1, 0, color);
-      break;
-  }
-}
-
-void dk_bmp_draw_sierpinski(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i32 depth, dk_color_t color)
-{
-  if (depth == 0)
-    return;
-
-  i32 width0 = width / 2;
-  i32 height0 = height / 2;
-
-  dk_bmp_draw_sierpinski(bmp, x, y, width0, height0, depth - 1, color);
-  dk_bmp_draw_sierpinski(bmp, x + width0, y, width0, height0, depth - 1, color);
-  dk_bmp_draw_sierpinski(bmp, x + width0 / 2, y + height0, width0, height0, depth - 1, color);
-
-  dk_bmp_draw_line(bmp, x, y, x + width, y, color);
-  dk_bmp_draw_line(bmp, x + width0, y, x + width0, y + height, color);
-  dk_bmp_draw_line(bmp, x, y, x + width0, y + height, color);
-
-  dk_bmp_draw_line(bmp, x + width0, y + height, x + width, y, color);
-  dk_bmp_draw_line(bmp, x + width, y, x + width, y + height, color);
-  dk_bmp_draw_line(bmp, x + width, y + height, x + width0, y + height, color);
-
-  dk_bmp_draw_line(bmp, x + width0, y + height, x, y + height, color);
-  dk_bmp_draw_line(bmp, x, y + height, x, y, color);
-  dk_bmp_draw_line(bmp, x, y, x + width0, y, color);
-}
-
-void dk_bmp_draw_sierpinski_carpet(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i32 depth, dk_color_t color)
-{
-  if (depth == 0)
-    return;
-
-  i32 width0 = width / 3;
-  i32 height0 = height / 3;
-
-  dk_color_t color0 = dk_color_to_hex(((x + width) << 32 | (y + height) << 16 | (width + height) << 8));
-
-  dk_bmp_draw_sierpinski_carpet(bmp, x, y, width0, height0, depth - 1, color0);
-  dk_bmp_draw_sierpinski_carpet(bmp, x + width0, y, width0, height0, depth - 1, color0);
-  dk_bmp_draw_sierpinski_carpet(bmp, x + width0 * 2, y, width0, height0, depth - 1, color0);
-
-  dk_bmp_draw_sierpinski_carpet(bmp, x, y + height0, width0, height0, depth - 1, color);
-  dk_bmp_draw_sierpinski_carpet(bmp, x + width0 * 2, y + height0, width0, height0, depth - 1, color0);
-
-  dk_bmp_draw_sierpinski_carpet(bmp, x, y + height0 * 2, width0, height0, depth - 1, color);
-  dk_bmp_draw_sierpinski_carpet(bmp, x + width0, y + height0 * 2, width0, height0, depth - 1, color0);
-  dk_bmp_draw_sierpinski_carpet(bmp, x + width0 * 2, y + height0 * 2, width0, height0, depth - 1, color0);
-
-  dk_bmp_draw_rect(bmp, x + width0, y + height0, width0, height0, color0);
-}
-
-void dk_bmp_draw_levy_c_curve(dk_bmp_t *bmp, i32 x, i32 y, i32 width, i32 height, i32 depth, i32 direction, dk_color_t color)
-{
-  if (depth == 0)
-    return;
-
-  i32 width0 = width / 2;
-  i32 height0 = height / 2;
-
-  switch (direction)
-  {
-    case 0:
-      dk_bmp_draw_levy_c_curve(bmp, x, y, width0, height0, depth - 1, 0, color);
-      dk_bmp_draw_line(bmp, x, y, x + width0, y + height0, color);
-      dk_bmp_draw_levy_c_curve(bmp, x + width0, y + height0, width0, height0, depth - 1, 1, color);
-      break;
-    case 1:
-      dk_bmp_draw_levy_c_curve(bmp, x + width0, y, width0, height0, depth - 1, 0, color);
-      dk_bmp_draw_line(bmp, x + width0, y, x, y + height0, color);
-      dk_bmp_draw_levy_c_curve(bmp, x, y + height0, width0, height0, depth - 1, 1, color);
-      break;
   }
 }
 

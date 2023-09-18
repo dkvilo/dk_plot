@@ -1,11 +1,11 @@
-CC 					:= gcc -std=c99 -Wno-deprecated
+CC 							:= clang -std=c99 -Wno-deprecated
 FRAMEWORK 			:= .
-SANDBOX_SOURCE 		:= source
+SANDBOX_SOURCE 	:= source
 BUILD_DIR 			:= build
-BIN 				:= dk_plot
+BIN 						:= dk_plot
 
 FINAL_CFLAGS 		:= -I./$(FRAMEWORK)
-OPT					:= -Ofast
+OPT							:= -Ofast
 
 prepare:
 	mkdir build
@@ -18,7 +18,7 @@ clean:
 	rm -rf $(BUILD_DIR)
 
 build:
-	make prepare && $(CC) $(SANDBOX_SOURCE)/*.c $(FINAL_CFLAGS) $(OPT) -o $(BUILD_DIR)/$(BIN) -lm
+	make prepare && $(CC) $(SANDBOX_SOURCE)/*.c $(FINAL_CFLAGS) $(OPT) -o $(BUILD_DIR)/$(BIN) -lm -lncurses
 
 .PHONY:
 	build clean
